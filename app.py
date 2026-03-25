@@ -140,7 +140,7 @@ filtered_df = df[mask].copy()
 st.sidebar.text(f"Showing {len(filtered_df)} games out of {len(df)}")
 
 # UI Tabs
-tab1, tab2, tab3 = st.tabs(["🔍 Semantic Search", "😲 Surprise Me (Cross-Genre)", "📈 Data & Visuals"])
+tab1, tab2, tab3, tab4 = st.tabs(["🔍 Semantic Search", "😲 Surprise Me (Cross-Genre)", "📈 Data & Visuals", "📊 Data Audit"])
 
 with tab1:
     st.header("Search for Games")
@@ -291,3 +291,27 @@ with tab3:
         st.subheader("Top Genres")
         fig_bar = plot_top_genres(filtered_df)
         st.plotly_chart(fig_bar, use_container_width=True)
+
+with tab4:
+    st.header("Phase 1: Data Audit & Acquisition")
+    
+    if st.button("Generate Full Audit Report"):
+        from utils import generate_data_audit_report
+        audit = generate_data_audit_report(df, dataset_vectors)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Total Games", audit['total_games'])
+            st.metric("Duplicate Rows", audit['duplicates'])
+            st.metric("Free Games", audit['price_stats']['free_games'])
+        with col2:
+            st.metric("Avg Price", f"${audit['price_stats']['mean']:.2f}")
+            st.metric("Year Range", audit['year_range'])
+            st.metric("Embedding Dims", audit['embedding_stats']['shape'][1])
+        
+        st.subheader("Missing Values by Column")
+        missing_df = pd.DataFrame(audit['missing_by_column'].items(), 
+                                  columns=['Column', 'Missing Count'])
+        st.bar_chart(missing_df.set_index('Column'))
+
+
