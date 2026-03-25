@@ -86,6 +86,27 @@ def load_and_clean_data(limit=10000):
             
     return df
 
+def add_derived_metadata(df):
+    """
+    Computes and adds derived metadata fields for richer filtering/analysis.
+    """
+    # Is free?
+    df['is_free'] = df['price'] == 0.0
+    
+    # Release year (already in code, but make it robust)
+    df['release_year'] = pd.to_datetime(df['release_date'], errors='coerce').dt.year.fillna(0).astype(int)
+    
+    # Review sentiment (positive/negative ratio)
+    df['positive_numeric'] = pd.to_numeric(df['positive'], errors='coerce').fillna(0)
+    df['negative_numeric'] = pd.to_numeric(df['negative'], errors='coerce').fillna(0)
+    df['sentiment_ratio'] = df['positive_numeric'] / (df['positive_numeric'] + df['negative_numeric'] + 1)
+    
+    # Price category
+    df['price_category'] = pd.cut(df['price'], bins=[-0.1, 0, 15, 30, 60, 999], 
+                                   labels=['Free', 'Budget', 'Standard', 'Premium', 'Luxury'])
+    
+    return df
+
 def get_text_fields(df):
     """Returns just the text fields needed for search/embedding."""
     cols = ['name', 'short_description', 'detailed_description', 'genres', 'tags', 'categories']
